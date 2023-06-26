@@ -20,7 +20,7 @@ Database: MongoDB
 To run the ChatApp locally, follow these steps:
 
 # Clone the repository:
-git clone https://github.com/HirenTumbadiya/devtalk.git
+git clone https://github.com/HirenTumbadiya/DevTalk.git
 
 Install the required dependencies for the front-end and back-end:
 For the front-end, navigate to the client directory and run:
