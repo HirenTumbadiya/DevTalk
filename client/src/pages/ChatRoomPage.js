@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import MainWindow from '../components/MainWindow';
 import AllList from '../components/chat/AllLists';
+import FriendList from '../components/chat/FriendList';
 
 const ChatRoomPage = () => {
   const [selectedOption, setSelectedOption] = useState("all");
@@ -18,7 +19,7 @@ const ChatRoomPage = () => {
 
   const renderFirstPart = () => {
     if (selectedOption === 'all') {
-      return <AllList onChatClick={handleChatClick} />;
+      return <FriendList onChatClick={handleChatClick} />;
     }
     // Render other components based on selectedOption
     return null;

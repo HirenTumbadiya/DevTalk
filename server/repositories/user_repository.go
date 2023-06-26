@@ -1,9 +1,9 @@
+// user_repository.go
 package repositories
 
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/HirenTumbadiya/devtalk-backend/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -41,41 +41,27 @@ func (ur *UserRepository) GetUserByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
-func RegisterUser(email string, password string, userRepository *UserRepository) {
-	// Create a new user object
-	user := &models.User{
-		Email:    email,
-		Password: password,
-		// Set other user properties as needed
-	}
-
-	// Call the CreateUser function
-	createdUser, err := userRepository.CreateUser(user)
+func (ur *UserRepository) SearchUsersByUsername(username string) ([]*models.User, error) {
+	filter := bson.M{"username": bson.M{"$regex": username, "$options": "i"}}
+	cur, err := ur.collection.Find(context.TODO(), filter)
 	if err != nil {
-		// Handle the error
-		fmt.Println("Failed to create user:", err)
-		return
+		return nil, err
+	}
+	defer cur.Close(context.TODO())
+
+	var users []*models.User
+	for cur.Next(context.TODO()) {
+		var user models.User
+		err := cur.Decode(&user)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
 	}
 
-	// User registration successful
-	fmt.Println("User registration successful:", createdUser)
-}
-
-func LoginUser(email string, password string, userRepository *UserRepository) {
-	// Call the GetUserByEmail function
-	user, err := userRepository.GetUserByEmail(email)
-	if err != nil {
-		// Handle the error
-		fmt.Println("Failed to fetch user:", err)
-		return
+	if err := cur.Err(); err != nil {
+		return nil, err
 	}
 
-	// Check if the password matches
-	if user.Password != password {
-		fmt.Println("Incorrect password")
-		return
-	}
-
-	// User login successful
-	fmt.Println("User login successful:", user)
+	return users, nil
 }

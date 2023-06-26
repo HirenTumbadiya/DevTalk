@@ -12,9 +12,38 @@ const LoginForm = () => {
       email: Yup.string().email('Invalid email address').required('Required'),
       password: Yup.string().required('Required'),
     }),
-    onSubmit: (values) => {
-      // Handle form submission (e.g., send login request to backend)
-      console.log(values);
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      try {
+        const response = await fetch('http://localhost:8000/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(values),
+        });
+
+        if (response.ok) {
+          const responseData = await response.text();
+          if (responseData) {
+            const data = JSON.parse(responseData);
+            console.log('Login successful:', data);
+          } else {
+            console.log('Login response is empty');
+          }
+        } else {
+          // Login failed
+          const error = await response.text();
+          console.log('Login failed:', error);
+        }
+      } catch (error) {
+        console.error('Error occurred during login:', error);
+      }
+
+      // Reset the form after login attempt
+      resetForm();
+
+      // Set submitting state to false
+      setSubmitting(false);
     },
   });
 

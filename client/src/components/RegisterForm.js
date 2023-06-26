@@ -14,9 +14,29 @@ const RegisterForm = () => {
       email: Yup.string().email('Invalid email address').required('Required'),
       password: Yup.string().required('Required'),
     }),
-    onSubmit: (values) => {
-      // Handle form submission (e.g., send registration request to backend)
-      console.log(values);
+    onSubmit: async (values) => {
+      try {
+        // Send registration request to backend
+        const response = await fetch('http://localhost:8000/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(values),
+        });
+
+        if (response.ok) {
+          console.log('Registration successful');
+          // Handle successful registration (e.g., redirect user)
+        } else {
+          const errorData = await response.json();
+          console.log('Registration failed:', errorData);
+          // Handle registration error (e.g., display error message)
+        }
+      } catch (error) {
+        console.log('Registration error:', error);
+        // Handle registration error (e.g., display error message)
+      }
     },
   });
 

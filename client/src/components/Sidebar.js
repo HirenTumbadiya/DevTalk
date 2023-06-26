@@ -11,6 +11,7 @@ import logo from '../assets/about.jpg'
 const Sidebar = () => {
   const chatRooms = [
     { title: "Notification", icon: <FiBell className="text-gray-600 mr-2" /> },
+    { title: "User-List", icon: <FiBell className="text-gray-600 mr-2" /> },
     { title: "Pinned", icon: null },
     { title: "All", icon: <FiMessageCircle className="text-gray-600 mr-2" /> },
     { title: "Archived", icon: <FiArchive className="text-gray-600 mr-2" /> },
