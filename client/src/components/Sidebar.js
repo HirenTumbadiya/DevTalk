@@ -1,22 +1,26 @@
-// import React from 'react';
+import React from 'react';
 import {
   FiBell,
   FiMessageCircle,
   FiLogOut,
   FiArchive,
   FiTrash2,
-} from "react-icons/fi";
-import logo from '../assets/about.jpg'
+} from 'react-icons/fi';
+import logo from '../assets/about.jpg';
 
-const Sidebar = () => {
+const Sidebar = ({ onOptionClick }) => {
+  const handleItemClick = (option) => {
+    onOptionClick(option);
+  };
+
   const chatRooms = [
-    { title: "Notification", icon: <FiBell className="text-gray-600 mr-2" /> },
-    { title: "User-List", icon: <FiBell className="text-gray-600 mr-2" /> },
-    { title: "Pinned", icon: null },
-    { title: "All", icon: <FiMessageCircle className="text-gray-600 mr-2" /> },
-    { title: "Archived", icon: <FiArchive className="text-gray-600 mr-2" /> },
-    { title: "Trash", icon: <FiTrash2 className="text-gray-600 mr-2" /> },
-    { title: "Settings", icon: null },
+    { title: 'Notification', icon: <FiBell className="text-gray-600 mr-2" />, option: 'notification' },
+    { title: 'User-List', icon: <FiBell className="text-gray-600 mr-2" />, option: 'user-list' },
+    { title: 'Pinned', icon: null, option: 'pinned' },
+    { title: 'All', icon: <FiMessageCircle className="text-gray-600 mr-2" />, option: 'all' },
+    { title: 'Archived', icon: <FiArchive className="text-gray-600 mr-2" />, option: 'archived' },
+    { title: 'Trash', icon: <FiTrash2 className="text-gray-600 mr-2" />, option: 'trash' },
+    { title: 'Settings', icon: null, option: 'settings' },
   ];
 
   return (
@@ -30,6 +34,7 @@ const Sidebar = () => {
             <li
               key={index}
               className="flex items-center px-4 py-2 rounded-xl hover:bg-[#F3FC8A] hover:text-black cursor-pointer"
+              onClick={() => handleItemClick(room.option)} // Handle item click
             >
               {room.icon}
               <span>{room.title}</span>
