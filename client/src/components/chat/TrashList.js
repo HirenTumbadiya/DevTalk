@@ -10,9 +10,9 @@ const TrashList = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Trash List</h2>
+      <h2 className="flex justify-center text-center items-center text-3xl font-semibold text-white p-5">Trash List</h2>
       {trashItems.length > 0 ? (
-        <ul>
+        <ul className='px-5'>
           {trashItems.map((item) => (
             <li key={item.id} className="flex items-center justify-between p-2 mb-2 bg-gray-200 rounded-lg">
               <span>{item.title}</span>

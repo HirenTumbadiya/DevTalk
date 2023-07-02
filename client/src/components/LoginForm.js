@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 
-const LoginForm = () => {
+const LoginForm = ({ setIsLoggedIn }) => {
+  const [error, setError] = useState('')
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -27,12 +28,17 @@ const LoginForm = () => {
           if (responseData) {
             const data = JSON.parse(responseData);
             console.log('Login successful:', data);
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('id', data.userID)
+            setTimeout(() => {
+              setIsLoggedIn(true); // Set isLoggedIn to true
+            }, 1000);
           } else {
             console.log('Login response is empty');
           }
         } else {
-          // Login failed
-          const error = await response.text();
+          const errorMessage = await response.text();
+          setError(errorMessage);
           console.log('Login failed:', error);
         }
       } catch (error) {
@@ -74,6 +80,7 @@ const LoginForm = () => {
         {formik.touched.password && formik.errors.password ? (
           <div className='text-red-600 absolute mt-16'>{formik.errors.password}</div>
         ) : null}
+      {error && <div className="text-red-600 relative">{error}</div>}
       </div>
       <button className=' bg-sky-600 text-white rounded-2xl py-2' type="submit">Login</button>
     </form>

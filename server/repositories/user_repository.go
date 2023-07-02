@@ -7,6 +7,7 @@ import (
 
 	"github.com/HirenTumbadiya/devtalk-backend/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -32,6 +33,24 @@ func (ur *UserRepository) GetUserByEmail(email string) (*models.User, error) {
 	filter := bson.M{"email": email}
 	var user models.User
 	err := ur.collection.FindOne(context.TODO(), filter).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("User not found")
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (ur *UserRepository) GetUserByID(id string) (*models.User, error) {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"_id": objID}
+	var user models.User
+	err = ur.collection.FindOne(context.TODO(), filter).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, errors.New("User not found")

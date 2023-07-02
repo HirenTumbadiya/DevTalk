@@ -6,50 +6,62 @@ import (
 
 	"github.com/HirenTumbadiya/devtalk-backend/models"
 	"github.com/HirenTumbadiya/devtalk-backend/repositories"
+	"github.com/gorilla/websocket"
 )
 
-type ChatHandlers struct {
-	chatRepository *repositories.ChatRepository
+type ChatHandler struct {
+	ChatRepo repositories.ChatRepository
 }
 
-func NewChatHandlers(chatRepository *repositories.ChatRepository) *ChatHandlers {
-	return &ChatHandlers{chatRepository: chatRepository}
+func NewChatHandler(repo repositories.ChatRepository) *ChatHandler {
+	return &ChatHandler{
+		ChatRepo: repo,
+	}
 }
 
-func (ch *ChatHandlers) SendMessage(w http.ResponseWriter, r *http.Request) {
-	var message models.Message
-	err := json.NewDecoder(r.Body).Decode(&message)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+func (h *ChatHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
+	// Parse the sender ID, recipient ID, and message from the request body
+	var request struct {
+		SenderID    string `json:"senderId"`
+		RecipientID string `json:"recipientId"`
+		Message     string `json:"message"`
 	}
 
-	// Get the chat ID from the request or any other necessary information
-	chatID := "" // Replace this with your logic to obtain the chat ID
-
-	// Call the repository method to add the message to the chat
-	err = ch.chatRepository.AddMessageToChat(chatID, &message)
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		// Handle error and return appropriate response
 	}
 
-	// Return a success response
-	w.WriteHeader(http.StatusOK)
+	// Create a chat message model
+	chatMessage := models.ChatMessage{
+		SenderID:    request.SenderID,
+		RecipientID: request.RecipientID,
+		Message:     request.Message,
+	}
+
+	err = h.ChatRepo.SaveChatMessage(chatMessage)
+	if err != nil {
+		// Handle error and return appropriate response
+	}
+
+	// Return success response
 }
 
-func (ch *ChatHandlers) GetMessages(w http.ResponseWriter, r *http.Request) {
-	// Get the chat ID from the request or any other necessary information
-	chatID := "" // Replace this with your logic to obtain the chat ID
-
-	// Call the repository method to retrieve the chat messages
-	messages, err := ch.chatRepository.GetChatMessages(chatID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+func (h *ChatHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+	// Upgrade the HTTP connection to a WebSocket connection
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
 	}
 
-	// Return the messages as a JSON response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(messages)
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		// Handle error and return appropriate response
+	}
+
+	defer conn.Close()
+
+	// WebSocket connection handling logic goes here
+	// You can implement the logic for sending and receiving messages
+	// using the conn object.
 }

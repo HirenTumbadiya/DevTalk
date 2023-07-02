@@ -2,15 +2,15 @@ import React from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 
-const RegisterForm = () => {
+const RegisterForm = ({ toggleForm }) => {
   const formik = useFormik({
     initialValues: {
-      name: '',
+      username: '',
       email: '',
       password: '',
     },
     validationSchema: Yup.object({
-      name: Yup.string().required('Required'),
+      username: Yup.string().required('Required'),
       email: Yup.string().email('Invalid email address').required('Required'),
       password: Yup.string().required('Required'),
     }),
@@ -24,10 +24,18 @@ const RegisterForm = () => {
           },
           body: JSON.stringify(values),
         });
-
+    
         if (response.ok) {
-          console.log('Registration successful');
-          // Handle successful registration (e.g., redirect user)
+          try {
+            const data = await response.json();
+            console.log(data);
+            setTimeout(() => {
+              toggleForm(); // Toggle to the login form
+            }, 1000);
+          } catch (error) {
+            console.log('Registration response error:', error);
+            // Handle error when response body is empty or not valid JSON
+          }
         } else {
           const errorData = await response.json();
           console.log('Registration failed:', errorData);
@@ -37,22 +45,23 @@ const RegisterForm = () => {
         console.log('Registration error:', error);
         // Handle registration error (e.g., display error message)
       }
-    },
+    }
+    
   });
 
   return (
     <form className="flex flex-col gap-2" onSubmit={formik.handleSubmit}>
     <div className='flex flex-col py-5'>
-      <label htmlFor="name">Name</label>
+      <label htmlFor="username">Name</label>
       <input
       className='py-2 border px-2 rounded-2xl'
         type="text"
-        id="name"
+        id="username"
         placeholder="Username"
-        {...formik.getFieldProps('name')}
+        {...formik.getFieldProps('username')}
       />
-      {formik.touched.name && formik.errors.name ? (
-        <div className='text-red-600 absolute mt-16'>{formik.errors.name}</div>
+      {formik.touched.username && formik.errors.username ? (
+        <div className='text-red-600 absolute mt-16'>{formik.errors.username}</div>
       ) : null}
         </div>
         <div className='flex flex-col pb-5'>

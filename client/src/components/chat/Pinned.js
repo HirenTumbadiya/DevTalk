@@ -10,9 +10,9 @@ const PinnedList = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Pinned List</h2>
+      <h2 className="flex justify-center text-center items-center text-3xl font-semibold text-white p-5">Pinned List</h2>
       {pinnedChats.length > 0 ? (
-        <ul>
+        <ul className='px-5'>
           {pinnedChats.map((chat) => (
             <li key={chat.id} className="flex items-center justify-between p-2 mb-2 bg-gray-200 rounded-lg">
               <div>

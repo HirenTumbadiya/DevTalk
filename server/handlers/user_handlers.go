@@ -6,9 +6,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/HirenTumbadiya/devtalk-backend/models"
 	"github.com/HirenTumbadiya/devtalk-backend/repositories"
 	"github.com/HirenTumbadiya/devtalk-backend/utils"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserHandlers struct {
@@ -20,9 +23,56 @@ func NewUserHandlers(userRepository *repositories.UserRepository) *UserHandlers 
 }
 
 func (uh *UserHandlers) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	// ... (existing code for user registration)
+	var user models.User
 
+	// Parse the JSON request body
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate the user data
+	if user.Username == "" || user.Email == "" || user.Password == "" {
+		http.Error(w, "Incomplete user data", http.StatusBadRequest)
+		return
+	}
+
+	// Hash the user's password
+	hashedPassword, err := utils.HashPassword(user.Password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	user.Password = hashedPassword
+
+	// Generate a new ObjectID for the user
+	user.ID = primitive.NewObjectID()
+
+	// Create the user in the repository
+	createdUser, err := uh.userRepository.CreateUser(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create the response JSON
+	response := map[string]interface{}{
+		"message": "User registered successfully",
+		"user":    createdUser,
+	}
+
+	// Convert the response to JSON
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set the response headers
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	w.Write(jsonResponse)
 }
 
 func (uh *UserHandlers) LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -99,6 +149,30 @@ func (uh *UserHandlers) SearchUsersByUsername(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
+func (uh *UserHandlers) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	userID := params["userID"]
+
+	// Retrieve the user from the repository
+	user, err := uh.userRepository.GetUserByID(userID)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	// Convert the user to JSON
+	jsonResponse, err := json.Marshal(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set the response headers
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)

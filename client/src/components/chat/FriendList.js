@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const FriendList = () => {
+  const currentUserId = localStorage.getItem("id");
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [notification, setNotification] = useState(null);
-  const currentUserId = "64982623a6b4dcd03b6884c8"; // Placeholder value, replace with your actual current user ID
-  const friendRequests = []; // Placeholder value, replace with your actual friend requests data
 
   const handleSearch = async () => {
     try {
-      const response = await axios.post(`http://localhost:8000/users/search?username=${searchTerm}`);
+      const response = await axios.get(`http://localhost:8000/users/search?username=${searchTerm}`);
       console.log(response);
       setSearchResults(response.data);
     } catch (error) {
@@ -22,25 +21,23 @@ const FriendList = () => {
 
   const handleSendRequest = async (receiver) => {
     try {
-      const response = await axios.post('http://localhost:8000/friend-requests', {
-        sender: currentUserId,
-        receiver: receiver,
+      const response = await axios.post('http://localhost:8000/friend-requests/send', {
+        UserID: currentUserId,
+        FriendID: receiver,
       });
       console.log(response);
-      setNotification(response.data.message);
+      
+      // Check the response data and handle it accordingly
+      if (response.data === '') {
+        setNotification('Friend request sent successfully');
+      } else {
+        setNotification('Error sending friend request');
+      }
     } catch (error) {
       console.error('Error sending friend request:', error);
     }
   };
-
-  const handleAcceptRequest = async (requestId) => {
-    try {
-      const response = await axios.post(`/friend-request/accept/${requestId}`);
-      setNotification(response.data.message);
-    } catch (error) {
-      console.error('Error accepting friend request:', error);
-    }
-  };
+  
 
   useEffect(() => {
     // Perform the search when the search term changes
@@ -48,9 +45,7 @@ const FriendList = () => {
   }, [searchTerm]);
 
   return (
-    <div>
-      <h1 className='flex justify-center text-center items-center text-3xl font-semibold text-white'>Friend List</h1>
-      
+    <div>      
       <div className="p-5">
         <input
           className='w-full py-3 px-2 rounded-xl bg-[#16171B] text-white focus:outline-none'
@@ -64,29 +59,29 @@ const FriendList = () => {
       {searchResults !== null && searchResults.length > 0 ? (
         <ul>
           {searchResults.map((user) => (
-            <li key={user.id} className="flex items-center py-2">
-              <img
+            <li key={user.id} className="flex items-center p-3 hover:bg-gray-700 mx-3 rounded-xl">
+              {/* <img
                 src={user.image} // Replace with the actual image source for the user
                 alt={user.name}
                 className="w-10 h-10 rounded-full mr-4"
-              />
+              /> */}
               <div>
-                <p className="font-bold">{user.name}</p>
+                <p className="font-bold text-white text-xl">{user.username}</p>
               </div>
               <button
                 onClick={() => handleSendRequest(user.id)}
                 className="ml-auto bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded"
               >
-                <i className="fas fa-user-plus"></i> {/* Add the appropriate icon for sending a request */}
+                <i className="fas fa-user-plus">Send</i>
               </button>
             </li>
           ))}
         </ul>
       ) : (
         searchResults === null ? (
-          <p>Loading...</p>
+          <p className='h-full w-full flex justify-center items-center'>Loading...</p>
         ) : (
-          <p>No users found</p>
+          <p className='px-5'>No users found</p>
         )
       )}
       

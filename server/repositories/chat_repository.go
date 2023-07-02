@@ -1,69 +1,73 @@
-// chat_repository.go
 package repositories
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/HirenTumbadiya/devtalk-backend/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type ChatRepository struct {
-	chatCollection *mongo.Collection
+type ChatRepository interface {
+	SaveChatMessage(chatMessage models.ChatMessage) error
+	GetChatMessages(senderID, recipientID string) ([]models.ChatMessage, error)
 }
 
-func NewChatRepository(client *mongo.Client) *ChatRepository {
-	database := client.Database("chatapp")
-	chatCollection := database.Collection("chats")
-
-	return &ChatRepository{chatCollection: chatCollection}
+type chatRepository struct {
+	collection *mongo.Collection
 }
 
-func (cr *ChatRepository) CreateChat(chat *models.Chat) (*models.Chat, error) {
-	_, err := cr.chatCollection.InsertOne(context.TODO(), chat)
-	if err != nil {
-		return nil, err
+func NewChatRepository(client *mongo.Client) ChatRepository {
+	db := client.Database("devtalk")
+	collection := db.Collection("chatMessages")
+
+	return &chatRepository{
+		collection: collection,
 	}
-	return chat, nil
 }
 
-func (cr *ChatRepository) GetChatByID(chatID string) (*models.Chat, error) {
-	filter := bson.M{"_id": chatID}
-	var chat models.Chat
-	err := cr.chatCollection.FindOne(context.TODO(), filter).Decode(&chat)
+func (r *chatRepository) SaveChatMessage(chatMessage models.ChatMessage) error {
+	_, err := r.collection.InsertOne(context.Background(), chatMessage)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("Chat not found")
-		}
-		return nil, err
+		return fmt.Errorf("failed to save chat message: %v", err)
 	}
-	return &chat, nil
-}
 
-func (cr *ChatRepository) AddMessageToChat(chatID string, message *models.Message) error {
-	filter := bson.M{"_id": chatID}
-	update := bson.M{"$push": bson.M{"messages": message}}
-
-	_, err := cr.chatCollection.UpdateOne(context.TODO(), filter, update)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
-func (cr *ChatRepository) GetChatMessages(chatID string) ([]*models.Message, error) {
-	filter := bson.M{"_id": chatID}
-	projection := bson.M{"messages": 1}
-	var chat models.Chat
-	err := cr.chatCollection.FindOne(context.TODO(), filter, options.FindOne().SetProjection(projection)).Decode(&chat)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("Chat not found")
-		}
-		return nil, err
+func (r *chatRepository) GetChatMessages(senderID, recipientID string) ([]models.ChatMessage, error) {
+	filter := bson.M{
+		"$or": []bson.M{
+			{
+				"senderID":    senderID,
+				"recipientID": recipientID,
+			},
+			{
+				"senderID":    recipientID,
+				"recipientID": senderID,
+			},
+		},
 	}
-	return chat.Messages, nil
+
+	cur, err := r.collection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get chat messages: %v", err)
+	}
+	defer cur.Close(context.Background())
+
+	var messages []models.ChatMessage
+	for cur.Next(context.Background()) {
+		var message models.ChatMessage
+		if err := cur.Decode(&message); err != nil {
+			return nil, fmt.Errorf("failed to decode chat message: %v", err)
+		}
+		messages = append(messages, message)
+	}
+
+	if err := cur.Err(); err != nil {
+		return nil, fmt.Errorf("error occurred while iterating chat messages: %v", err)
+	}
+
+	return messages, nil
 }
