@@ -1,3 +1,4 @@
+// repositories/chat_repository.go
 package repositories
 
 import (
@@ -6,12 +7,13 @@ import (
 
 	"github.com/HirenTumbadiya/devtalk-backend/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ChatRepository interface {
 	SaveChatMessage(chatMessage models.ChatMessage) error
-	GetChatMessages(senderID, recipientID string) ([]models.ChatMessage, error)
+	GetChatMessages(senderID, recipientID primitive.ObjectID) ([]models.ChatMessage, error)
 }
 
 type chatRepository struct {
@@ -36,16 +38,16 @@ func (r *chatRepository) SaveChatMessage(chatMessage models.ChatMessage) error {
 	return nil
 }
 
-func (r *chatRepository) GetChatMessages(senderID, recipientID string) ([]models.ChatMessage, error) {
+func (r *chatRepository) GetChatMessages(senderID, recipientID primitive.ObjectID) ([]models.ChatMessage, error) {
 	filter := bson.M{
 		"$or": []bson.M{
 			{
-				"senderID":    senderID,
-				"recipientID": recipientID,
+				"senderid":    senderID.Hex(),
+				"recipientid": recipientID.Hex(),
 			},
 			{
-				"senderID":    recipientID,
-				"recipientID": senderID,
+				"senderid":    recipientID.Hex(),
+				"recipientid": senderID.Hex(),
 			},
 		},
 	}

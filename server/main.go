@@ -9,8 +9,8 @@ import (
 
 	"github.com/HirenTumbadiya/devtalk-backend/handlers"
 	"github.com/HirenTumbadiya/devtalk-backend/repositories"
+	"github.com/HirenTumbadiya/devtalk-backend/utils"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -49,8 +49,8 @@ func main() {
 	// Initialize chat repository
 	chatRepository := repositories.NewChatRepository(client)
 
-	// Initialize chat handlers
-	chatHandlers := handlers.NewChatHandler(chatRepository)
+	// Initialize chat handlers with the ChatHandler
+	chatHandlers := handlers.NewChatHandler(chatRepository, friendRepository)
 
 	// Initialize the router
 	router := mux.NewRouter()
@@ -65,7 +65,14 @@ func main() {
 	router.HandleFunc("/friend-requests/reject", friendHandlers.RejectFriendRequest).Methods("POST")
 	router.HandleFunc("/friend-requests", friendHandlers.GetFriendRequests).Methods("GET")
 	router.HandleFunc("/friends", friendHandlers.GetFriends).Methods("GET")
-	router.HandleFunc("/chat", chatHandlers.HandleWebSocket).Methods("GET")
+	router.HandleFunc("/chat/send-message", chatHandlers.SendMessage).Methods("POST")
+	router.HandleFunc("/chat/history", chatHandlers.GetChatHistory).Methods("GET")
+
+	// Create WebSocketHandler and pass the friendRepository
+	webSocketHandler := utils.NewWebSocketHandler(friendRepository)
+
+	// Handle WebSocket upgrade request
+	router.HandleFunc("/chat", webSocketHandler.Upgrade).Methods("GET")
 
 	// Create a CORS middleware
 	corsMiddleware := func(next http.Handler) http.Handler {
@@ -96,28 +103,6 @@ func main() {
 		log.Printf("Starting the server on port %s...\n", port)
 		if err := http.ListenAndServe(":"+port, handler); err != nil {
 			log.Fatalf("Failed to start the server: %v", err)
-		}
-	}()
-
-	// Establish a WebSocket connection
-	go func() {
-		conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:3000/ws", nil)
-		if err != nil {
-			log.Printf("Failed to establish WebSocket connection: %v\n", err)
-			return
-		}
-		defer conn.Close()
-
-		log.Println("WebSocket connection established")
-
-		// Read messages from the WebSocket connection
-		for {
-			_, message, err := conn.ReadMessage()
-			if err != nil {
-				log.Printf("Error reading WebSocket message: %v\n", err)
-				return
-			}
-			log.Println("Received message:", string(message))
 		}
 	}()
 

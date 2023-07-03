@@ -125,7 +125,7 @@ func (h *FriendHandler) GetFriendRequests(w http.ResponseWriter, r *http.Request
 
 func (h *FriendHandler) GetFriends(w http.ResponseWriter, r *http.Request) {
 	// Parse the user ID from the request parameters or headers
-	userID := "user-id" // Replace with your implementation
+	userID := r.URL.Query().Get("userId")
 
 	// Call the GetFriends method
 	friends, err := h.FriendRepo.GetFriends(userID)

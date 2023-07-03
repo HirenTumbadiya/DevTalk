@@ -43,21 +43,32 @@ const Notification = () => {
     fetchFriendRequests();
   }, []);
 
-  const handleAcceptRequest = async (requestId) => {
+  const handleAcceptRequest = async (requestId, userId, friendId) => {
     try {
-      await axios.post(`http://localhost:8000/friend-requests/accept`, { requestId });
-      // Optional: Update the local state or perform any necessary actions
-      // after the friend request is accepted
+      await axios.post(`http://localhost:8000/friend-requests/accept`, {
+        userId,
+        friendId,
+      });
+  
+      setFriendRequests((prevFriendRequests) =>
+        prevFriendRequests.filter((request) => request.id !== requestId)
+      );
     } catch (error) {
       console.error('Error accepting friend request:', error);
     }
   };
+  
 
-  const handleRejectRequest = async (requestId) => {
+  const handleRejectRequest = async (requestId, userId, friendId) => {
     try {
-      await axios.post(`http://localhost:8000/friend-requests/reject`, { requestId });
-      // Optional: Update the local state or perform any necessary actions
-      // after the friend request is rejected
+      await axios.post(`http://localhost:8000/friend-requests/reject`, {
+        userId,
+        friendId,
+      });
+  
+      setFriendRequests((prevFriendRequests) =>
+        prevFriendRequests.filter((request) => request.id !== requestId)
+      );
     } catch (error) {
       console.error('Error rejecting friend request:', error);
     }
@@ -90,13 +101,13 @@ const Notification = () => {
                   <div className="flex items-center">
                     <button
                       className="text-green-500 hover:text-green-700 focus:outline-none"
-                      onClick={() => handleAcceptRequest(request.id)}
+                      onClick={() => handleAcceptRequest(request.id, request.userId, request.friendId)}
                     >
                       <FaCheckCircle size={24} />
                     </button>
                     <button
                       className="text-red-500 hover:text-red-700 focus:outline-none ml-2"
-                      onClick={() => handleRejectRequest(request.id)}
+                      onClick={() => handleRejectRequest(request.id, request.userId, request.friendId)}
                     >
                       <FaTimesCircle size={24} />
                     </button>

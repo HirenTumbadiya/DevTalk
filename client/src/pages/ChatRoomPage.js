@@ -20,6 +20,7 @@ const ChatRoomPage = () => {
   };
 
   const handleChatClick = (chat) => {
+    console.log(chat)
     setSelectedChat(chat);
   };
 
@@ -29,7 +30,7 @@ const ChatRoomPage = () => {
     } else if (selectedOption === 'notification') {
       return <Notification />;
     }else if (selectedOption === 'user-list') {
-      return <FriendList />;
+      return <FriendList onChatClick={handleChatClick}/>;
     }else if (selectedOption === 'archived') {
       return <ArchivedList />;
     }else if (selectedOption === 'pinned') {
@@ -49,7 +50,6 @@ const ChatRoomPage = () => {
         <div className="flex-1">
           <Routes>
             <Route path="/" element={<MainWindow selectedChat={selectedChat} renderFirstPart={renderFirstPart} />} />
-            <Route path="/notification" element={<Notification />} />
           </Routes>
         </div>
       </div>

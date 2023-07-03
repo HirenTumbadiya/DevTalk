@@ -9,7 +9,7 @@ const MainWindow = ({ selectedChat, renderFirstPart }) => {
         {renderFirstPart()}
       </div>
       <div className="flex-grow bg-gray-300">
-        <ChatRoom />
+        <ChatRoom selectedChat={selectedChat} />
       </div>
     </div>
   );

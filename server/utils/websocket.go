@@ -29,9 +29,10 @@ func (h *WebSocketHandler) Upgrade(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not open WebSocket connection", http.StatusBadRequest)
 		return
 	}
-
+	fmt.Println("Request URL:", r.URL.String())
 	// Parse user ID from the request or headers
-	userID := "user-id" // Replace with your implementation
+	userID := r.URL.Query().Get("senderId")
+	fmt.Println("Adding connection for user ID:", userID)
 
 	h.mutex.Lock()
 	h.connections[userID] = conn
@@ -42,6 +43,8 @@ func (h *WebSocketHandler) Upgrade(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WebSocketHandler) handleWebSocketMessages(userID string, conn *websocket.Conn) {
+	fmt.Println("Handling WebSocket messages for user:", userID)
+
 	for {
 		// Read message from WebSocket connection
 		_, message, err := conn.ReadMessage()
@@ -50,40 +53,46 @@ func (h *WebSocketHandler) handleWebSocketMessages(userID string, conn *websocke
 			h.mutex.Lock()
 			delete(h.connections, userID)
 			h.mutex.Unlock()
+			fmt.Println("Error reading WebSocket message:", err)
 			return
 		}
 
-		// Handle incoming message
-		// ...
+		fmt.Println("Received WebSocket message:", string(message))
 
-		// Broadcast the friend requests to other connected clients
-		h.BroadcastFriendRequests(userID, string(message))
+		// Handle incoming message
+		var msg struct {
+			SenderId    string `json:"senderId"`
+			RecipientID string `json:"recipientId"`
+			Message     string `json:"message"`
+		}
+		err = json.Unmarshal(message, &msg)
+		if err != nil {
+			fmt.Println("Error unmarshaling message:", err)
+			continue
+		}
+
+		if msg.RecipientID == userID {
+			// Message received from User B, send it to User A
+			h.SendMessageToRecipient(msg.SenderId, msg.Message)
+		} else {
+			// Message received from User A, send it to User B
+			h.SendMessageToRecipient(msg.RecipientID, msg.Message)
+		}
 	}
 }
 
-func (h *WebSocketHandler) BroadcastFriendRequests(recipientID, message string) {
+func (h *WebSocketHandler) SendMessageToRecipient(recipientID, message string) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	friendRequests, err := h.friendRepo.GetFriendRequests(recipientID)
-	if err != nil {
-		fmt.Println("Error retrieving friend requests:", err)
-		return
-	}
-
 	conn, ok := h.connections[recipientID]
 	if !ok {
-		fmt.Println("Recipient connection not found")
+		fmt.Println("Recipient connection not found for recipient ID:", recipientID)
+		fmt.Println("Current connections:", h.connections)
 		return
 	}
 
-	jsonMessage, err := json.Marshal(friendRequests)
-	if err != nil {
-		fmt.Println("Error marshaling friend requests:", err)
-		return
-	}
-
-	err = conn.WriteMessage(websocket.TextMessage, jsonMessage)
+	err := conn.WriteMessage(websocket.TextMessage, []byte(message))
 	if err != nil {
 		fmt.Println("Error sending WebSocket message:", err)
 	}
