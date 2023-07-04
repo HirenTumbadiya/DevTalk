@@ -30,7 +30,9 @@ const Sidebar = ({ onOptionClick }) => {
       if (response.ok) {
         const data = await response.json();
         console.log(data)
-        setUsername(data.username);
+        if (data && data.username) {
+          setUsername(data.username);
+        }
       } else {
         console.error('Failed to fetch user:', response.status);
       }

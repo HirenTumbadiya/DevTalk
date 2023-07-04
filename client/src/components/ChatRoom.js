@@ -12,7 +12,7 @@ const ChatRoom = ({selectedChat }) => {
   const userID = localStorage.getItem('id');
 
   useEffect(() => {
-    SetUserName(selectedChat.username)
+    SetUserName(selectedChat ? selectedChat.username : '');
   },[selectedChat])
 
   const handleSendMessage = async () => {
@@ -20,13 +20,33 @@ const ChatRoom = ({selectedChat }) => {
       return;
     }
   
+    if (!selectedChat) {
+      console.log('No selected chat');
+      return;
+    }
+  
+    let recipientId = selectedChat.userId;
+  
+    if (selectedChat.userId === userID) {
+      recipientId = selectedChat.friendId;
+    }else{
+      recipientId = selectedChat.userId
+    }
+  
+    if (!recipientId) {
+      console.log('No recipient ID available');
+      return;
+    }
+  
     const newMessage = {
       id: Date.now().toString(),
       senderId: userID,
-      recipientId: selectedChat.userId,
+      recipientId: recipientId,
       message: inputValue,
       createdAt: new Date(),
     };
+    
+    
   
     // Log the message with sender ID and recipient ID
     console.log('Sending message:', newMessage);
@@ -118,7 +138,7 @@ const ChatRoom = ({selectedChat }) => {
 // Fetch chat history
 const fetchChatHistory = async () => {
   const senderId =  userID // Replace with the appropriate sender ID
-  const recipientID = selectedChat.userId // Replace with the appropriate recipient ID
+  const recipientID = selectedChat ? selectedChat.userId : null;
   try {
     const response = await axios.get(`http://localhost:8000/chat/history?senderId=${senderId}&recipientID=${recipientID}`);
     console.log(response);
@@ -171,10 +191,10 @@ const fetchChatHistory = async () => {
             <div
               key={message.id}
               className={`flex items-center mb-2 ${
-                message.senderId === '64a03e5451b8b5a0894c6800' ? 'justify-end' : ''
+                message.senderId === userID ? 'justify-end' : ''
               }`}
             >
-              {message.senderId !== '64a03e5451b8b5a0894c6800' && (
+              {message.senderId !== userID && (
                 <img
                   className="w-8 h-8 rounded-full mr-2"
                   src={profile}
@@ -183,14 +203,14 @@ const fetchChatHistory = async () => {
               )}
               <div
                 className={`${
-                  message.senderId === '64a03e5451b8b5a0894c6800'
+                  message.senderId === userID
                     ? 'bg-gray-600 text-white'
                     : 'bg-gray-800 text-white'
                 } p-2 rounded-lg`}
               >
                 <p className="text-sm">{message.message}</p>
               </div>
-              {message.senderId === '64a03e5451b8b5a0894c6800' && (
+              {message.senderId === userID && (
                 <img
                   className="w-8 h-8 rounded-full ml-2"
                   src={profile}
