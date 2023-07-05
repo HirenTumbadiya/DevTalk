@@ -1,8 +1,7 @@
-// models/participant.go
-
 package models
 
 import "github.com/gorilla/websocket"
+w
 
 type Participant struct {
 	Conn *websocket.Conn `json:"-"`

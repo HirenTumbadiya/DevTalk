@@ -3,41 +3,41 @@ import { FiPaperclip, FiSmile, FiSend } from 'react-icons/fi';
 import profile from "../assets/about.jpg";
 import axios from 'axios';
 
-const ChatRoom = ({selectedChat }) => {
+const ChatRoom = ({ selectedChat }) => {
   console.log(selectedChat)
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [socket, setSocket] = useState(null);
-  const [username ,SetUserName] = useState()
+  const [username, SetUserName] = useState();
   const userID = localStorage.getItem('id');
 
   useEffect(() => {
     SetUserName(selectedChat ? selectedChat.username : '');
-  },[selectedChat])
+  }, [selectedChat])
 
   const handleSendMessage = async () => {
     if (inputValue.trim() === '') {
       return;
     }
-  
+
     if (!selectedChat) {
       console.log('No selected chat');
       return;
     }
-  
+
     let recipientId = selectedChat.userId;
-  
+
     if (selectedChat.userId === userID) {
       recipientId = selectedChat.friendId;
-    }else{
+    } else {
       recipientId = selectedChat.userId
     }
-  
+
     if (!recipientId) {
       console.log('No recipient ID available');
       return;
     }
-  
+
     const newMessage = {
       id: Date.now().toString(),
       senderId: userID,
@@ -45,15 +45,13 @@ const ChatRoom = ({selectedChat }) => {
       message: inputValue,
       createdAt: new Date(),
     };
-    
-    
-  
+
     // Log the message with sender ID and recipient ID
     console.log('Sending message:', newMessage);
-  
+
     // Update the messages state with the new message
     setMessages(prevMessages => [...prevMessages, newMessage]);
-  
+
     // Clear the input field after sending the message
     setInputValue('');
 
@@ -69,7 +67,7 @@ const ChatRoom = ({selectedChat }) => {
           message: newMessage.message
         }),
       });
-  
+
       if (response.ok) {
         console.log('Message sent successfully');
       } else {
@@ -78,11 +76,11 @@ const ChatRoom = ({selectedChat }) => {
     } catch (error) {
       console.error('Error sending message:', error);
     }
-  
+
     // Send the message through the WebSocket connection
     socket.send(JSON.stringify(newMessage));
   };
-  
+
 
   // WebSocket connection initialization
   useEffect(() => {
@@ -91,70 +89,65 @@ const ChatRoom = ({selectedChat }) => {
     const newSocket = new WebSocket(`ws://localhost:8000/chat?senderId=${userID}`);
     console.log('WebSocket connection:', newSocket);
 
-
     newSocket.addEventListener('open', () => {
       console.log('WebSocket connection established');
     });
-    
+
     newSocket.addEventListener('close', () => {
       console.log('WebSocket connection closed');
     });
-    
+
     newSocket.addEventListener('error', (error) => {
       console.error('WebSocket connection error:', error);
     });
-    
 
     // Handle incoming messages
     newSocket.addEventListener('message', (event) => {
       console.log('Received WebSocket message:', event.data);
-    
+
       try {
         const message = JSON.parse(event.data);
-    
+
         // Update the messages state with the received message
         setMessages(prevMessages => [...prevMessages, message]);
       } catch (error) {
         // Handle the case when the message is not valid JSON
         const newMessage = {
           id: Date.now().toString(),
-          senderId: 'sender-id', 
+          senderId: 'sender-id',
           recipientId: 'recipient-id',
           message: event.data,
           createdAt: new Date(),
         };
-    
+
         // Log the message with sender ID and recipient ID
         console.log('Received plain text message:', newMessage);
-        
+
         setMessages(prevMessages => [...prevMessages, newMessage]);
       }
     });
-    
 
     // Set the socket state variable
     setSocket(newSocket);
 
-// Fetch chat history
-const fetchChatHistory = async () => {
-  const senderId =  userID // Replace with the appropriate sender ID
-  const recipientID = selectedChat ? selectedChat.userId : null;
-  try {
-    const response = await axios.get(`http://localhost:8000/chat/history?senderId=${senderId}&recipientID=${recipientID}`);
-    console.log(response);
+    // Fetch chat history
+    const fetchChatHistory = async () => {
+      const senderId = userID // Replace with the appropriate sender ID
+      const recipientID = selectedChat ? selectedChat.userId : null;
+      try {
+        const response = await axios.get(`http://localhost:8000/chat/history?senderId=${senderId}&recipientID=${recipientID}`);
+        console.log(response);
 
-    if (response.status === 200) {
-      const chatHistory = response.data;
-      setMessages(chatHistory);
-    } else {
-      console.log('Failed to fetch chat history');
-    }
-  } catch (error) {
-    console.error('Error fetching chat history:', error);
-  }
-};
-
-
+        if (response.status === 200) {
+          const chatHistory = response.data;
+          setMessages(chatHistory);
+        } else {
+          console.log('Failed to fetch chat history');
+        }
+      } catch (error) {
+        console.error('Error fetching chat history:', error);
+      }
+    };
 
     fetchChatHistory();
 
@@ -163,6 +156,14 @@ const fetchChatHistory = async () => {
       newSocket.close();
     };
   }, []);
+
+  if (!selectedChat) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-gray-500">Please select a chat to start messaging.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -192,7 +193,7 @@ const fetchChatHistory = async () => {
               key={message.id}
               className={`flex items-center mb-2 ${
                 message.senderId === userID ? 'justify-end' : ''
-              }`}
+                }`}
             >
               {message.senderId !== userID && (
                 <img
@@ -206,7 +207,7 @@ const fetchChatHistory = async () => {
                   message.senderId === userID
                     ? 'bg-gray-600 text-white'
                     : 'bg-gray-800 text-white'
-                } p-2 rounded-lg`}
+                  } p-2 rounded-lg`}
               >
                 <p className="text-sm">{message.message}</p>
               </div>

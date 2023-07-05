@@ -1,4 +1,3 @@
-// models/chat_message.go
 package models
 
 import "time"

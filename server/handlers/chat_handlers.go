@@ -1,4 +1,3 @@
-// handlers/chat_handler.go
 package handlers
 
 import (

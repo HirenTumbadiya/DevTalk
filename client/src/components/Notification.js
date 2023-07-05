@@ -49,7 +49,6 @@ const Notification = () => {
         userId,
         friendId,
       });
-  
       setFriendRequests((prevFriendRequests) =>
         prevFriendRequests.filter((request) => request.id !== requestId)
       );

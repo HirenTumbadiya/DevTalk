@@ -120,8 +120,7 @@ func (r *friendRepository) AcceptFriendRequest(userID, friendID string) error {
 	if err != nil {
 		return errors.New("Invalid friend ID")
 	}
-
-	// Check if the friend request already exists
+	fmt.Println(userObjectID, friendObjectID)
 	filter := bson.M{
 		"$or": []bson.M{
 			{"userid": userObjectID, "friendid": friendObjectID},
@@ -135,9 +134,8 @@ func (r *friendRepository) AcceptFriendRequest(userID, friendID string) error {
 	}
 	if count > 0 {
 		return errors.New("Friend request already accepted")
+		fmt.Println("already accepted")
 	}
-
-	// Update the friend request status to "accepted"
 	filter = bson.M{
 		"$or": []bson.M{
 			{"userId": userObjectID, "friendId": friendObjectID},
@@ -148,11 +146,12 @@ func (r *friendRepository) AcceptFriendRequest(userID, friendID string) error {
 	update := bson.M{
 		"$set": bson.M{"status": "accepted"},
 	}
+	fmt.Println("accepting")
 	_, err = r.friendCollection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("accepted")
 	return nil
 }
 
